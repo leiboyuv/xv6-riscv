@@ -55,6 +55,9 @@ procinit(void)
       initlock(&p->lock, "proc");
       p->state = UNUSED;
       p->kstack = KSTACK((int) (p - proc));
+
+       // -> Initialize field with 0
+      p->affinity_mask = 0; 
   }
 }
 
@@ -146,6 +149,9 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  // -> Initialize field with 0
+  p->affinity_mask = 0;
+
   return p;
 }
 
@@ -169,6 +175,7 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->affinity_mask = 0; // -> free the allocated memory
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -311,6 +318,7 @@ fork(void)
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
+  np->affinity_mask = p->affinity_mask; // -> get affinity_mask from parent
 
   release(&np->lock);
 
@@ -457,10 +465,16 @@ scheduler(void)
 
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
+
+      // -> check whther the curr proccess is allows to work in the curr cpu
+      int curr_cpu_id = cpuid();
+      int mask = curr_cpu_id & p->affinity_mask;
+      if(p->state == RUNNABLE && (p->affinity_mask == 0 || mask > 0)) {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
+
+        printf("proccess id: %d\n cpu id: %d\n", p->pid, cpuid());
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
@@ -604,6 +618,15 @@ kill(int pid)
     release(&p->lock);
   }
   return -1;
+}
+ // -> new system call
+void
+set_affinity_mask(int mask_to_set){
+
+  struct proc *p = myproc();
+  acquire(&p->lock);
+  p->affinity_mask = mask_to_set;
+  release(&p->lock);
 }
 
 void
