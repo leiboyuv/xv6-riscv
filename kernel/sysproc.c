@@ -112,5 +112,5 @@ sys_set_affinity_mask(void)
   int mask_to_set;
 
   argint(0, &mask_to_set);
-  return set_affinity_mask(mask_to_set);
+  set_affinity_mask(mask_to_set);
 }
