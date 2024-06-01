@@ -474,7 +474,7 @@ scheduler(void)
         // to release its lock and then reacquire it
         // before jumping back to us.
 
-        printf("proccess id: %d\n cpu id: %d\n", p->pid, cpuid());
+        printf("message from schduler\n\tproccess id: %d\n\t cpu id: %d\n", p->pid, cpuid());
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
