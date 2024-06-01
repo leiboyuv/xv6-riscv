@@ -113,4 +113,5 @@ sys_set_affinity_mask(void)
 
   argint(0, &mask_to_set);
   set_affinity_mask(mask_to_set);
+  return 0;
 }
