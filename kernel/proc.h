@@ -108,4 +108,7 @@ struct proc {
 
   // task 5
   int affinity_mask;
+
+  //task 6 
+  int effective_affinity_mask;
 };

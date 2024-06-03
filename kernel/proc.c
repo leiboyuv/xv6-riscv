@@ -58,6 +58,9 @@ procinit(void)
 
        // -> Initialize field with 0
       p->affinity_mask = 0; 
+
+      // -> Initialize field with 0
+      p->effective_affinity_mask =0;
   }
 }
 
@@ -152,6 +155,9 @@ found:
   // -> Initialize field with 0
   p->affinity_mask = 0;
 
+  // -> Initialize field with 0
+  p->effective_affinity_mask =0;
+
   return p;
 }
 
@@ -176,6 +182,7 @@ freeproc(struct proc *p)
   p->xstate = 0;
   p->state = UNUSED;
   p->affinity_mask = 0; // -> free the allocated memory
+  p->effective_affinity_mask =0; // -> free the allocated memory
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -319,6 +326,8 @@ fork(void)
 
   pid = np->pid;
   np->affinity_mask = p->affinity_mask; // -> get affinity_mask from parent
+  np->effective_affinity_mask = p->effective_affinity_mask; // -> get effective_affinity_mask from parent
+
 
   release(&np->lock);
 
@@ -468,17 +477,25 @@ scheduler(void)
 
       // -> check whther the curr proccess is allows to work in the curr cpu
       int curr_cpu_id = cpuid();
-      int mask = curr_cpu_id & p->affinity_mask;
-      if(p->state == RUNNABLE && (p->affinity_mask == 0 || mask > 0)) {
+      int mask = (1<<curr_cpu_id) & p-> effective_affinity_mask;
+      if(p->state == RUNNABLE && (p->effective_affinity_mask == 0 || mask > 0)) {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
-
+      if(p-> affinity_mask != 0){
+        p-> effective_affinity_mask = ~(1<<curr_cpu_id) & p-> effective_affinity_mask;// -> ~ comp
+      }
         printf("message from schduler\n\tproccess id: %d\n\t cpu id: %d\n", p->pid, cpuid());
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
-
+          if(p->effective_affinity_mask==0 && p->affinity_mask != 0){ //-> reset p->effective_affinity_mask
+             p->effective_affinity_mask = p->affinity_mask;
+             p-> effective_affinity_mask = ~(1<<curr_cpu_id) & p-> effective_affinity_mask;// -> ~ comp
+              if(p->effective_affinity_mask==0){ 
+                 p->effective_affinity_mask = p->affinity_mask;
+            }
+          }
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
@@ -511,6 +528,7 @@ sched(void)
     panic("sched interruptible");
 
   intena = mycpu()->intena;
+
   swtch(&p->context, &mycpu()->context);
   mycpu()->intena = intena;
 }
@@ -626,6 +644,7 @@ set_affinity_mask(int mask_to_set){
   struct proc *p = myproc();
   acquire(&p->lock);
   p->affinity_mask = mask_to_set;
+  p->effective_affinity_mask = mask_to_set;
   release(&p->lock);
 }
 
