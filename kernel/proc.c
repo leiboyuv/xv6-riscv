@@ -478,27 +478,33 @@ scheduler(void)
       // -> check whther the curr proccess is allows to work in the curr cpu
       int curr_cpu_id = cpuid();
       int mask = (1<<curr_cpu_id) & p-> effective_affinity_mask;
-      if(p->state == RUNNABLE && (p->effective_affinity_mask == 0 || mask > 0)) {
+
+      if (p->state == RUNNABLE && (p->effective_affinity_mask == 0 || mask > 0)) {
+
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
-      if(p-> affinity_mask != 0){
-        p-> effective_affinity_mask = ~(1<<curr_cpu_id) & p-> effective_affinity_mask;// -> ~ comp
-      }
-        printf("message from schduler\n\tproccess id: %d\n\t cpu id: %d\n", p->pid, cpuid());
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-          if(p->effective_affinity_mask==0 && p->affinity_mask != 0){ //-> reset p->effective_affinity_mask
-             p->effective_affinity_mask = p->affinity_mask;
-             p-> effective_affinity_mask = ~(1<<curr_cpu_id) & p-> effective_affinity_mask;// -> ~ comp
-              if(p->effective_affinity_mask==0){ 
-                 p->effective_affinity_mask = p->affinity_mask;
+
+        if (p-> affinity_mask != 0){
+          p-> effective_affinity_mask = ~(1<<curr_cpu_id) & p-> effective_affinity_mask;// -> ~ comp
+        }
+          printf("message from scheduler\n\tproccess id: %d\n\tcpu id: %d\n", p->pid, cpuid());
+          p->state = RUNNING;
+          c->proc = p;
+          swtch(&c->context, &p->context);
+
+          if (p->effective_affinity_mask==0 && p->affinity_mask != 0){ //-> reset p->effective_affinity_mask
+
+            p->effective_affinity_mask = p->affinity_mask;
+            p-> effective_affinity_mask = ~(1<<curr_cpu_id) & p-> effective_affinity_mask;// -> ~ comp
+
+            if(p->effective_affinity_mask == 0){ 
+              p->effective_affinity_mask = p->affinity_mask;
             }
           }
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
       }
       release(&p->lock);
     }
