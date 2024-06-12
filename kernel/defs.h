@@ -191,3 +191,4 @@ void            virtio_disk_intr(void);
 
 // channel.c
 void            channelinit(void);
+int             channel_create(void);
