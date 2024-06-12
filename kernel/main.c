@@ -27,6 +27,7 @@ main()
     binit();         // buffer cache
     iinit();         // inode table
     fileinit();      // file table
+    channelinit();   // channel array
     virtio_disk_init(); // emulated hard disk
     userinit();      // first user process
     __sync_synchronize();
