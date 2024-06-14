@@ -12,8 +12,22 @@
 #include "file.h"
 #include "fcntl.h"
 
+extern int channel_create(void);
+extern int channel_put(int id, int data);
+
 uint64
 sys_channel_create(void)
 {
     return channel_create();
+}
+
+uint64
+sys_channel_put(void)
+{
+    int cd, data;
+
+    argint(0, &cd);
+    argint(1, &data);
+
+  return channel_put(cd, data);
 }

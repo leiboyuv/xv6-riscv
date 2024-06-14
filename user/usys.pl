@@ -36,4 +36,5 @@ entry("getpid");
 entry("sbrk");
 entry("sleep");
 entry("uptime");
-entry("channel_create")
+entry("channel_create");
+entry("channel_put");

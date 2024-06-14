@@ -23,6 +23,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int channel_create(void);
+int channel_put(int, int);
 
 // ulib.c
 int stat(const char*, struct stat*);
