@@ -10,14 +10,34 @@
 int
 main(int argc, char *argv[])
 {
-    int cd0 = channel_create();
-    printf("0 channel id is: %d\n", cd0);
-    channel_create();
-    int cd2 = channel_create();
-    printf("2 channel id is: %d\n", cd2);
-    printf("put into 0 returned: %d\n", channel_put(cd0, 2));
-    printf("put into 10 returned: %d\n", channel_put(10, 2));
-    printf("put into -3 returned: %d\n", channel_put(-3, 2));
-    printf("put into 0 again returned: %d\n", channel_put(cd0, 2));
-    return 0;
+    int cd = channel_create();
+    if (cd < 0) {
+        printf("Failed to create channel\n");
+        exit(1);
+    }
+
+    if (fork() == 0) {
+
+        if (channel_put(cd, 42) < 0) {
+            printf("Failed to put data in channel\n");
+            exit(1);
+        }
+
+        channel_put(cd, 43); // Sleeps until cleared
+
+    } else {
+        int data;
+        if (channel_take(cd, &data) < 0) { // 42
+            printf("Failed to take data from channel\n");
+            exit(1);
+        }
+
+        printf("%d\n", data);
+        channel_take(cd, &data); // 43
+        printf("%d\n", data);
+
+        // data = channel_take(cd, &data); 
+        // printf("THIS WILL NEVER BE PRINTED\n");    
+    }
+        return 0;
 }

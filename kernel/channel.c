@@ -91,3 +91,32 @@ valid:
 
     return 0;
 }
+
+int
+channel_take(int cd, uint64 data){
+
+    if (cd < 0 || cd >= NCHANNEL) {   // No such channel descriptor exists
+        return -1;
+    }
+
+    struct channel* ch = channels + cd;
+
+    acquire(&ch->lock);
+    if (!ch->used){                 // channel descriptor is invalid
+        release(&ch->lock);
+        return -1;
+    }
+
+    while (!ch->data_available) {
+        sleep(ch, &ch->lock);
+    }
+
+    // data is available
+    int ret = copyout(myproc()->pagetable, data, (char *)&ch->data, sizeof(int));
+    ch->data_available = 0;
+    wakeup(ch);
+    release(&ch->lock);
+
+    return ret;     // ret is the result of copyout, zero if copied successfully and -1 otherwise
+
+}
