@@ -4,18 +4,7 @@
 #include "spinlock.h"
 #include "defs.h"
 #include "proc.h"
-
-
-struct channel {
-    int chd;                // channel descriptor - index of the channel in the channel table
-    struct spinlock lock;
-
-    // channel->lock must be held when using these:
-    int used;               // zero if the channel is unused, one if is used
-    int data;               // channel->lock must be held in order to retreive/modify the data
-    int data_available;     // '1' if data is availabe. Turns '0' when a process takes it.
-    int owner;              // pid of the process created the channel. '0' if there if channel is unused.
-};
+#include "channel.h"
 
 // Global array of channels 
 struct channel channels[NCHANNEL];
@@ -84,7 +73,7 @@ valid:
         sleep(ch, &ch->lock);
         if (!ch->used){
             release(&ch->lock);
-            return -1;              // woken up since channel_destory was called on this cd
+            return -1;              // woken up since channel_destroy was called on this cd
         }
     }
 
@@ -115,7 +104,7 @@ channel_take(int cd, uint64 data){
         sleep(ch, &ch->lock);
         if (!ch->used){
             release(&ch->lock);
-            return -1;              // woken up since channel_destory was called on this cd
+            return -1;              // woken up since channel_destroy was called on this cd
         }
     }
 
@@ -131,7 +120,7 @@ channel_take(int cd, uint64 data){
 
 int channel_destroy(int cd){
 
-        if (cd < 0 || cd >= NCHANNEL) {   // No such channel descriptor exists
+    if (cd < 0 || cd >= NCHANNEL) {   // No such channel descriptor exists
         return -1;
     }
 

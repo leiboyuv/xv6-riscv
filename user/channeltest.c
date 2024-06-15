@@ -16,7 +16,11 @@ main(int argc, char *argv[])
         exit(1);
     }
 
+    // int pid = getpid(); // for testing destroying channels on kill(pid)
+
     if (fork() == 0) {
+
+        // kill(pid);   // for testing destroying channels on kill(pid)
 
         if (channel_put(cd, 42) < 0) {
             printf("Failed to put data in channel\n");
@@ -24,7 +28,7 @@ main(int argc, char *argv[])
         }
 
         channel_put(cd, 43); // Sleeps until cleared
-        sleep(3);
+        sleep(3);            // synchronize so 2nd take of the parent will happen befor destroying
         channel_destroy(cd);
 
     } else {
@@ -43,7 +47,7 @@ main(int argc, char *argv[])
             printf("%d\n", data);
         }
         if (channel_take(cd, &data) < 0) {
-            printf("Failed to take data from channel #3\n");
+            printf("Failed to take data from channel #3\n");    // This should be printed
             exit(1);
         }
         else {

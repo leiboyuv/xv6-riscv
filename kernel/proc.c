@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "channel.h"
 
 struct cpu cpus[NCPU];
 
@@ -19,6 +20,8 @@ extern void forkret(void);
 static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
+ 
+extern struct channel channels[NCHANNEL]; // assignment 2
 
 // helps ensure that wakeups of wait()ing
 // parents are not lost. helps obey the
@@ -360,6 +363,19 @@ exit(int status)
     }
   }
 
+  // assignment 2: Delete all channels created by this process
+  for (int cd = 0; cd < NCHANNEL; cd++){
+    struct channel * ch = channels + cd;
+    acquire(&ch->lock);
+    if (ch->owner == p->pid){
+      release(&ch->lock);
+      channel_destroy(cd);
+    }
+    else{
+      release(&ch->lock);
+    }
+  }
+
   begin_op();
   iput(p->cwd);
   end_op();
@@ -596,6 +612,20 @@ kill(int pid)
         p->state = RUNNABLE;
       }
       release(&p->lock);
+       
+      // Destroy all channels created by the killed process
+      for (int cd = 0; cd < NCHANNEL; cd++){
+        struct channel * ch = channels + cd;
+        acquire(&ch->lock);
+        if (ch->owner == pid){
+          release(&ch->lock);
+          channel_destroy(cd);
+        }
+        else {
+          release(&ch->lock);
+        }
+      }
+      
       return 0;
     }
     release(&p->lock);
