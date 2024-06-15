@@ -193,3 +193,4 @@ void            virtio_disk_intr(void);
 void            channelinit(void);
 int             channel_create(void);
 int             channel_put(int, int);
+int             channel_destory(int);

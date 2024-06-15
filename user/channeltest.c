@@ -24,20 +24,32 @@ main(int argc, char *argv[])
         }
 
         channel_put(cd, 43); // Sleeps until cleared
+        sleep(3);
+        channel_destroy(cd);
 
     } else {
         int data;
         if (channel_take(cd, &data) < 0) { // 42
-            printf("Failed to take data from channel\n");
+            printf("Failed to take data from channel #1\n");
+            exit(1);
+        } else {
+            printf("%d\n", data);
+        }
+        if (channel_take(cd, &data) < 0) { // 43
+            printf("Failed to take data from channel #2\n");
             exit(1);
         }
+        else {
+            printf("%d\n", data);
+        }
+        if (channel_take(cd, &data) < 0) {
+            printf("Failed to take data from channel #3\n");
+            exit(1);
+        }
+        else {
+            printf("%d\n", data);
+        }
 
-        printf("%d\n", data);
-        channel_take(cd, &data); // 43
-        printf("%d\n", data);
-
-        // data = channel_take(cd, &data); 
-        // printf("THIS WILL NEVER BE PRINTED\n");    
     }
         return 0;
 }

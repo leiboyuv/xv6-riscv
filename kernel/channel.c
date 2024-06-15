@@ -82,6 +82,10 @@ channel_put(int cd, int data){
 valid:
     while (ch->data_available) {
         sleep(ch, &ch->lock);
+        if (!ch->used){
+            release(&ch->lock);
+            return -1;              // woken up since channel_destory was called on this cd
+        }
     }
 
     ch->data = data;
@@ -109,6 +113,10 @@ channel_take(int cd, uint64 data){
 
     while (!ch->data_available) {
         sleep(ch, &ch->lock);
+        if (!ch->used){
+            release(&ch->lock);
+            return -1;              // woken up since channel_destory was called on this cd
+        }
     }
 
     // data is available
@@ -119,4 +127,27 @@ channel_take(int cd, uint64 data){
 
     return ret;     // ret is the result of copyout, zero if copied successfully and -1 otherwise
 
+}
+
+int channel_destroy(int cd){
+
+        if (cd < 0 || cd >= NCHANNEL) {   // No such channel descriptor exists
+        return -1;
+    }
+
+    struct channel* ch = channels + cd;
+
+    acquire(&ch->lock);
+    if (!ch->used){                 // channel descriptor is invalid
+        release(&ch->lock);
+        return -1;
+    }
+
+    ch->used = 0;
+    ch->owner = -1;
+    ch->data_available = 0;
+    wakeup(ch);
+    release(&ch->lock);
+
+    return 0;
 }

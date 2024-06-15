@@ -15,6 +15,7 @@
 extern int channel_create(void);
 extern int channel_put(int id, int data);
 extern int channel_take(int cd, uint64 data);
+extern int channel_destroy(int cd);
 
 uint64
 sys_channel_create(void)
@@ -43,4 +44,13 @@ sys_channel_take(void)
     argaddr(1, &data);
 
   return channel_take(cd, data);
+}
+
+uint64
+sys_channel_destroy(void)
+{
+  int cd;
+  argint(0, &cd);
+
+  return channel_destroy(cd);
 }
