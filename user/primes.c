@@ -54,11 +54,13 @@ void printNumbers(int channel2){
 
 int main(int argc, char *argv[])
 {
-  if(argc != 2){
-    printf("Wrong usuage: %s checkersCount\n");
-    exit(1);
+  int checkersCount = 0;
+  if(argc < 2){
+    checkersCount = 3;
   }
-  int checkersCount = atoi(argv[1]);
+  else {
+    checkersCount = atoi(argv[1]);
+  }
   int channel1 = channel_create();
   int channel2 = channel_create();
   if(channel1 == -1 || channel2 == -1){
